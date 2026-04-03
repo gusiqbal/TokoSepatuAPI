@@ -1,17 +1,21 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"learnapirest/controller"
+	"learnapirest/service"
+
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(s *service.SepatuService) *gin.Engine {
+	sepatu := controller.NewSepatuController(s)
+
 	router := gin.Default()
 
-	router.POST("/sepatu/create", controller.CreateSepatu)
-	router.GET("/sepatu/get", controller.GetSepatu)
-	router.POST("/sepatu/delete", controller.DeleteSepatu)
-	router.POST("/sepatu/update", controller.UpdateSepatu)
+	router.POST("/sepatu/create", sepatu.CreateSepatu)
+	router.GET("/sepatu/get", sepatu.GetSepatu)
+	router.POST("/sepatu/delete", sepatu.DeleteSepatu)
+	router.POST("/sepatu/update", sepatu.UpdateSepatu)
 
 	return router
 }

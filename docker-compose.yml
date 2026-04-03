@@ -1,18 +1,27 @@
-version: '3.8'
+version: "3.8"
 
 services:
   mysql:
     image: mysql:8.0
     container_name: mysql_db
     restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: tokosepatu
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: admin123
+    env_file:
+      - .env
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+
+  app:
+    build: .
+    container_name: go_app
+    restart: always
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:

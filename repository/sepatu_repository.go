@@ -2,32 +2,50 @@ package repository
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"learnapirest/config"
 	"learnapirest/model"
 	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-func CreateSepatu(ctx context.Context, sepatu *model.Sepatu) error {
+type ISepatuRepository interface {
+	CreateSepatu(ctx context.Context, sepatu *model.Sepatu) error
+	GetAllSepatu(ctx context.Context) ([]model.Sepatu, error)
+	DeleteSepatu(ctx context.Context, id uuid.UUID) error
+	UpdateSepatuByID(ctx context.Context, sepatuUpdate *model.UpdateSepatu, id uuid.UUID) error
+}
+
+type SepatuRepoSitory struct {
+	db *gorm.DB
+}
+
+func NewSepatuRepo(db *gorm.DB) *SepatuRepoSitory {
+	return &SepatuRepoSitory{
+		db: db,
+	}
+}
+
+func (r *SepatuRepoSitory) CreateSepatu(ctx context.Context, sepatu *model.Sepatu) error {
 	sepatu.ID = uuid.New()
 	sepatu.CreatedAt = time.Now().Unix()
 	sepatu.LastUpdatedAt = time.Now().Unix()
-	return config.DB.WithContext(ctx).Create(&sepatu).Error
+	return r.db.WithContext(ctx).Create(&sepatu).Error
 }
 
-func GetAllSepatu(ctx context.Context) ([]model.Sepatu, error) {
+func (r *SepatuRepoSitory) GetAllSepatu(ctx context.Context) ([]model.Sepatu, error) {
 	var sepatus []model.Sepatu
-	err := config.DB.WithContext(ctx).Find(&sepatus).Error
+	err := r.db.WithContext(ctx).Find(&sepatus).Error
 	return sepatus, err
 }
 
-func DeleteSepatu(ctx context.Context, id uuid.UUID) error {
-	return config.DB.WithContext(ctx).Delete(&model.Sepatu{}, "id = ?", id).Error
+func (r *SepatuRepoSitory) DeleteSepatu(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&model.Sepatu{}, "id = ?", id).Error
 }
 
-func UpdateSepatuByID(ctx context.Context, sepatuUpdate *model.UpdateSepatu, id uuid.UUID) error {
+func (r *SepatuRepoSitory) UpdateSepatuByID(ctx context.Context, sepatuUpdate *model.UpdateSepatu, id uuid.UUID) error {
 	var sepatus model.Sepatu
-	if err := config.DB.WithContext(ctx).First(&sepatus, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&sepatus, "id = ?", id).Error; err != nil {
 		return err
 	}
 
@@ -49,5 +67,5 @@ func UpdateSepatuByID(ctx context.Context, sepatuUpdate *model.UpdateSepatu, id 
 
 	sepatus.LastUpdatedAt = time.Now().Unix()
 
-	return config.DB.Save(&sepatus).Error
+	return r.db.Save(&sepatus).Error
 }
