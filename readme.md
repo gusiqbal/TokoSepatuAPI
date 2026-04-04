@@ -84,7 +84,7 @@
 ### Prerequisites
 
 Pastikan sudah terinstall:
-- [Go 1.22+](https://golang.org/dl/)
+- [Go 1.25+](https://golang.org/dl/)
 - [Docker & Docker Compose](https://docs.docker.com/get-docker/)
 - [Git](https://git-scm.com/)
 
