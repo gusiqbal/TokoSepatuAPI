@@ -1,21 +1,28 @@
 package router
 
 import (
-	"learnapirest/controller"
 	"learnapirest/service"
+
+	"learnapirest/middleware"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(s *service.SepatuService) *gin.Engine {
-	sepatu := controller.NewSepatuController(s)
+func SetupRouter(s *service.SepatuService, a *service.AccountService) *gin.Engine {
+	limiter := middleware.NewRateLimiter(100, time.Minute)
+	secret := []byte("your-secret-from-env")
 
-	router := gin.Default()
+	app := gin.New()
 
-	router.POST("/sepatu/create", sepatu.CreateSepatu)
-	router.GET("/sepatu/get", sepatu.GetSepatu)
-	router.POST("/sepatu/delete", sepatu.DeleteSepatu)
-	router.POST("/sepatu/update", sepatu.UpdateSepatu)
+	app.Use(
+		middleware.Recovery(),
+		limiter.Middleware(),
+		middleware.Logger(),
+	)
 
-	return router
+	SepatuRouter(app, s, secret)
+	AccountRouter(app, a, secret)
+
+	return app
 }

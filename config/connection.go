@@ -27,5 +27,6 @@ func InitDB() {
 	}
 
 	db.AutoMigrate(&model.Sepatu{})
+	db.AutoMigrate(&model.User{})
 	DB = db
 }
