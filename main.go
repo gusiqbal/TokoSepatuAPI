@@ -2,15 +2,21 @@ package main
 
 import (
 	"learnapirest/config"
-	sepatuRepository "learnapirest/repository"
+	repo "learnapirest/repository"
 	"learnapirest/router"
-	sepatuService "learnapirest/service"
+	service "learnapirest/service"
 )
 
 func main() {
 	config.InitDB()
-	sepatuRepo := sepatuRepository.NewSepatuRepo(config.DB)
-	sepatuServ := sepatuService.NewSepatuService(sepatuRepo)
-	r := router.SetupRouter(sepatuServ)
+	appConfig := config.LoadConfig()
+
+	sepatuRepo := repo.NewSepatuRepo(config.DB)
+	sepatuServ := service.NewSepatuService(sepatuRepo)
+
+	accounRepo := repo.NewAccountRepository(config.DB)
+	accountServ := service.NewAccountService(*accounRepo, *appConfig)
+
+	r := router.SetupRouter(sepatuServ, accountServ)
 	r.Run(":8080")
 }

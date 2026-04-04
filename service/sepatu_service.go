@@ -26,7 +26,6 @@ func NewSepatuService(repo repository.ISepatuRepository) *SepatuService {
 }
 
 func (s *SepatuService) CreateSepatu(ctx context.Context, sepatus *model.Sepatu) error {
-	sepatus.ID = uuid.New()
 	return s.repo.CreateSepatu(ctx, sepatus)
 }
 

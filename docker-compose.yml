@@ -1,4 +1,4 @@
-version: "3.8"
+version: "1.0"
 
 services:
   mysql:
@@ -12,16 +12,25 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
-  app:
-    build: .
-    container_name: go_app
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    container_name: go_api
     restart: always
     ports:
       - "8080:8080"
+      - "40000:40000"
+    volumes:
+      - .:/app
     env_file:
       - .env
     depends_on:
       - mysql
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - "apparmor=unconfined"
 
 volumes:
   mysql_data:
