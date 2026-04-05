@@ -27,6 +27,7 @@ func JWTAuth(secret []byte) gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
+			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
@@ -36,13 +37,14 @@ func JWTAuth(secret []byte) gin.HandlerFunc {
 			return
 		}
 
-		userID, ok := claims["sub"].(string)
+		user_id, ok := claims["user_id"].(string)
 
-		if !ok || userID == "" {
+		if !ok || user_id == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Subject"})
+			return
 		}
 
-		c.Set("userId", userID)
+		c.Set("userId", user_id)
 		c.Next()
 	}
 }

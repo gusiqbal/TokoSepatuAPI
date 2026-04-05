@@ -17,6 +17,6 @@ func main() {
 	accounRepo := repo.NewAccountRepository(config.DB)
 	accountServ := service.NewAccountService(*accounRepo, *appConfig)
 
-	r := router.SetupRouter(sepatuServ, accountServ)
+	r := router.SetupRouter(sepatuServ, accountServ, appConfig)
 	r.Run(":8080")
 }

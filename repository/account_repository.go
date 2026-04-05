@@ -29,7 +29,7 @@ func NewAccountRepository(db *gorm.DB) *AccountRepository {
 func (a *AccountRepository) GetUserByUserName(ctx context.Context, username string, password string) (*model.User, error) {
 	account := new(model.User) // Asumsi nama struct Anda adalah model.Account
 
-	if err := a.db.WithContext(ctx).Where("username = ?", username).First(account).Error; err != nil {
+	if err := a.db.WithContext(ctx).Where("user_name = ?", username).First(account).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("Username Doesnt Exist!") // Pesan disamarkan demi keamanan
 		}
@@ -44,12 +44,24 @@ func (a *AccountRepository) GetUserByUserName(ctx context.Context, username stri
 }
 
 func (a *AccountRepository) CreateAccount(ctx context.Context, account *model.User) error {
-	if err := a.db.Where("Email = ?", account.Email).First(&account).Error; err != nil {
-		return errors.New("Email already exist!")
+	var existing model.User
+
+	err := a.db.WithContext(ctx).
+		Where("email = ?", account.Email).
+		First(&existing).Error
+
+	if err == nil {
+		return errors.New("email already exists")
 	}
 
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	now := time.Now().Unix()
 	account.ID = uuid.New()
-	account.CreatedAt = time.Now().Unix()
-	account.LastUpdatedAt = time.Now().Unix()
-	return a.db.WithContext(ctx).Create(&account).Error
+	account.CreatedAt = now
+	account.LastUpdatedAt = now
+
+	return a.db.WithContext(ctx).Create(account).Error
 }

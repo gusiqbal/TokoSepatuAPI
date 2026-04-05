@@ -14,8 +14,8 @@ type JwtCustomClaims struct {
 
 func GenerateJWT(userID uuid.UUID, secretKey []byte) (string, error) {
 	claims := &JwtCustomClaims{
-		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID.String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "toko-sepatu-api",

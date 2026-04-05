@@ -1,6 +1,7 @@
 package router
 
 import (
+	"learnapirest/config"
 	"learnapirest/service"
 
 	"learnapirest/middleware"
@@ -9,10 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(s *service.SepatuService, a *service.AccountService) *gin.Engine {
+func SetupRouter(s *service.SepatuService, a *service.AccountService, config *config.Config) *gin.Engine {
 	limiter := middleware.NewRateLimiter(100, time.Minute)
-	secret := []byte("your-secret-from-env")
-
+	secret := []byte(config.JWTSecret)
 	app := gin.New()
 
 	app.Use(

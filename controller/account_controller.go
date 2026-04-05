@@ -4,6 +4,7 @@ import (
 	"learnapirest/model"
 	"learnapirest/service"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,7 +46,7 @@ func (a *AccountController) Login(ginc *gin.Context) {
 	token, err := a.IAccountService.Login(ginc, input.Username, input.Password)
 
 	if err != nil {
-		if err.Error() == "username atau password salah" {
+		if strings.ToLower(err.Error()) == "password does not match!" {
 			ginc.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
