@@ -1,1 +1,35 @@
+# 1. Binaries & Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/learnapirest
+/main
+
+# 2. File Rahasia
 .env
+
+# 3. Debugging & Profiling tools
+__debug_bin*
+*.prof
+*.pprof
+coverage.out
+
+# 4. Folder IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+workspace.xml
+
+# 5. OS Specific
+.DS_Store
+Thumbs.db
+
+# 6. Dependency / Vendor (Opsional)
+# Jika kamu menggunakan go mod vendor, biasanya folder ini tidak di-commit
+# kecuali disepakati oleh tim.
+# /vendor/
