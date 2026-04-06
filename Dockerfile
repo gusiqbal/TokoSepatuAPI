@@ -12,7 +12,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 # Copy the rest of the code
 COPY . .
-RUN go build main.go
+RUN go build  -o main ./cmd/api/main.go
 
 FROM alpine:latest
 
