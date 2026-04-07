@@ -38,3 +38,7 @@ func (s *ProductService) DeleteSepatu(ctx context.Context, id *string) error {
 func (s *ProductService) UpdateSepatu(ctx context.Context, sepatu *UpdateProductRequest, id uuid.UUID) error {
 	return s.repo.UpdateProduct(ctx, sepatu, id)
 }
+
+func (s *ProductService) LikeProduct(ctx context.Context, req *LikeProductRequest) error {
+	return s.repo.LikeProduct(ctx, req)
+}

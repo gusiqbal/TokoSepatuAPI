@@ -17,4 +17,6 @@ func ProductRouter(app *gin.Engine, s *ProductService, secret []byte) {
 
 	api.PUT("/:id", sepatuCtrl.UpdateSepatu)
 	api.DELETE("/:id", sepatuCtrl.DeleteSepatu)
+
+	api.POST("like", sepatuCtrl.LikeProduct)
 }

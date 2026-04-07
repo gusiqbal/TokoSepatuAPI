@@ -79,3 +79,12 @@ func (r *ProductRepoSitory) UpdateProduct(ctx context.Context, sepatuUpdate *Upd
 
 	return r.db.Save(&sepatus).Error
 }
+
+func (r *ProductRepoSitory) LikeProduct(ctx context.Context, req *LikeProductRequest) error {
+	var likedProduct ProductFavorite
+
+	likedProduct.ID = uuid.New()
+	likedProduct.ProductID = req.ID
+
+	return r.db.WithContext(ctx).Save(&likedProduct).Error
+}
