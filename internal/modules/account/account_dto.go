@@ -13,6 +13,10 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type LogoutRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
 type UserResponse struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

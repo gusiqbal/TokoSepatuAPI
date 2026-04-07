@@ -62,17 +62,44 @@ func (a *AccountController) Login(ginc *gin.Context) {
 	})
 }
 
+func (a *AccountController) Logout(ginc *gin.Context) {
+
+	var LogoutRequest LogoutRequest
+
+	if err := ginc.ShouldBindJSON(LogoutRequest); err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request!"})
+		return
+	}
+
+	if err := a.AccountService.Logout(ginc, LogoutRequest.RefreshToken); err != nil {
+		var appErr *helpers.AppError
+		if errors.As(err, &appErr) {
+			ginc.JSON(appErr.Code, gin.H{"error": appErr.Message})
+			return
+		}
+		ginc.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan sistem"})
+		return
+	}
+
+	ginc.JSON(http.StatusOK, gin.H{
+		"message": "Logout Success",
+	})
+
+}
+
 func (a *AccountController) RefreshToken(ginc *gin.Context) {
 	var reqRefreshToken RefreshTokenRequest
 
 	if err := ginc.ShouldBindJSON(reqRefreshToken); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid refresh token"})
+		return
 	}
 
 	tokenResponse, err := a.AccountService.RefreshToken(ginc, reqRefreshToken.RefreshToken)
 
 	if err != nil {
 		ginc.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
 	}
 
 	ginc.JSON(http.StatusOK, tokenResponse.RefreshToken)
