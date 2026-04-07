@@ -11,5 +11,6 @@ func AccountRouter(app *gin.Engine, a *AccountService, secret []byte) {
 
 	api.POST("/create", accountCtrl.CreateAccount)
 	api.POST("/login", accountCtrl.Login)
+	api.POST("/logout", accountCtrl.Logout)
 	api.POST("/refresh", accountCtrl.RefreshToken)
 }

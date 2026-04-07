@@ -10,6 +10,7 @@ import (
 type IAccountService interface {
 	CreateAccount(ctx context.Context, account *RegisterUserRequest) error
 	Login(ctx context.Context, username string, password string) (string, string, error)
+	Logout(ctx context.Context, refreshToken string) error
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
 }
 
@@ -55,6 +56,25 @@ func (a *AccountService) Login(ctx context.Context, username string, password st
 		RefreshToken: RefreshToken,
 	}, nil
 
+}
+
+func (a *AccountService) Logout(ctx context.Context, refreshTokenString string) error {
+	// 1. Verifikasi apakah token ini memang valid dan milik sistem kita
+	_, err := helpers.VerifyJWT(refreshTokenString, a.conf.JWTSecret)
+	if err != nil {
+		// Jika token sudah tidak valid/kedaluwarsa, anggap saja proses logout sukses
+		// (karena tujuannya memang membuat token tidak bisa dipakai)
+		return nil
+	}
+
+	// 2. LOGIKA ENTERPRISE (Opsional/Next Step):
+	// Di aplikasi berskala besar, kamu harus menghapus token ini dari Database atau Redis.
+	// err = s.repo.DeleteRefreshToken(ctx, refreshTokenString)
+	// if err != nil {
+	//     return apperror.New(http.StatusInternalServerError, "Gagal memproses logout")
+	// }
+
+	return nil
 }
 
 func (a *AccountService) RefreshToken(ctx context.Context, refresToken string) (*TokenResponse, error) {
