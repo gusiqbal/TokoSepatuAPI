@@ -21,3 +21,12 @@ type UserResponse struct {
 	PhoneNumber string `json:"phoneNumber"`
 	CreatedAt   int64  `json:"createdAt"`
 }
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
+type TokenResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}

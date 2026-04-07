@@ -2,14 +2,15 @@ package account
 
 import (
 	"context"
-	"errors"
 	"learnapirest/helpers"
 	"learnapirest/internal/config"
+	"net/http"
 )
 
 type IAccountService interface {
 	CreateAccount(ctx context.Context, account *RegisterUserRequest) error
-	Login(ctx context.Context, username string, password string) (string, error)
+	Login(ctx context.Context, username string, password string) (string, string, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
 }
 
 type AccountService struct {
@@ -35,20 +36,49 @@ func (a *AccountService) CreateAccount(ctx context.Context, request *RegisterUse
 	return a.repo.CreateAccount(ctx, request)
 }
 
-func (a *AccountService) Login(ctx context.Context, username string, password string) (string, error) {
+func (a *AccountService) Login(ctx context.Context, username string, password string) (*TokenResponse, error) {
 
 	userData, err := a.repo.GetUserByUserName(ctx, username, password)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	err = helpers.VerifyPassword(userData.PasswordHash, password)
 	if err != nil {
-		return "", errors.New("Invalid username or password")
+		return nil, helpers.NewError(http.StatusUnauthorized, "Invalid username or password")
 	}
 
-	token, _ := helpers.GenerateJWT(userData.ID, a.conf.JWTSecret)
+	accessToken, _ := helpers.GenerateAccessToken(userData.ID, a.conf.JWTSecret)
+	RefreshToken, _ := helpers.GenerateRefreshToken(userData.ID, a.conf.JWTSecret)
+	return &TokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: RefreshToken,
+	}, nil
 
-	return token, nil
+}
 
+func (a *AccountService) RefreshToken(ctx context.Context, refresToken string) (*TokenResponse, error) {
+	userID, err := helpers.VerifyJWT(refresToken, a.conf.JWTSecret)
+
+	if err != nil {
+		return nil, helpers.NewError(http.StatusUnauthorized, "Refresh token is not valid!")
+	}
+
+	user, err := a.repo.GetUserByID(ctx, userID)
+
+	if err != nil {
+		return nil, helpers.NewError(http.StatusUnauthorized, "User not found, Session not valid!")
+	}
+
+	newAccessToken, err := helpers.GenerateAccessToken(user.ID, a.conf.JWTSecret)
+	if err != nil {
+		return nil, helpers.NewError(http.StatusInternalServerError, "Failed to make access token!")
+	}
+
+	newRefreshToken, err := helpers.GenerateRefreshToken(user.ID, a.conf.JWTSecret)
+
+	return &TokenResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
 }

@@ -1,19 +1,20 @@
 package account
 
 import (
+	"errors"
+	"learnapirest/helpers"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AccountController struct {
-	IAccountService IAccountService
+	AccountService *AccountService
 }
 
-func NewAccountController(IAccountService IAccountService) *AccountController {
+func NewAccountController(AccountService *AccountService) *AccountController {
 	return &AccountController{
-		IAccountService: IAccountService,
+		AccountService: AccountService,
 	}
 }
 
@@ -24,7 +25,7 @@ func (a *AccountController) CreateAccount(ginc *gin.Context) {
 		return
 	}
 
-	if err := a.IAccountService.CreateAccount(ginc, &input); err != nil {
+	if err := a.AccountService.CreateAccount(ginc, &input); err != nil {
 		ginc.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -41,11 +42,13 @@ func (a *AccountController) Login(ginc *gin.Context) {
 		return
 	}
 
-	token, err := a.IAccountService.Login(ginc, input.Username, input.Password)
+	token, err := a.AccountService.Login(ginc, input.Username, input.Password)
 
 	if err != nil {
-		if strings.ToLower(err.Error()) == "password does not match!" {
-			ginc.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		var appErr *helpers.AppError
+
+		if errors.As(err, &appErr) {
+			ginc.JSON(appErr.Code, gin.H{"error": appErr.Message})
 			return
 		}
 
@@ -54,7 +57,24 @@ func (a *AccountController) Login(ginc *gin.Context) {
 	}
 
 	ginc.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil",
+		"message": "Login success",
 		"token":   token,
 	})
+}
+
+func (a *AccountController) RefreshToken(ginc *gin.Context) {
+	var reqRefreshToken RefreshTokenRequest
+
+	if err := ginc.ShouldBindJSON(reqRefreshToken); err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid refresh token"})
+	}
+
+	tokenResponse, err := a.AccountService.RefreshToken(ginc, reqRefreshToken.RefreshToken)
+
+	if err != nil {
+		ginc.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+	}
+
+	ginc.JSON(http.StatusOK, tokenResponse.RefreshToken)
+
 }
