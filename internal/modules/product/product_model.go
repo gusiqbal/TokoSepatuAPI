@@ -14,3 +14,24 @@ type Product struct {
 	LastUpdatedAt int64     `gorm:"autoUpdateTime:milli"`
 	CreatedAt     int64     `gorm:"autoCreateTime:milli"`
 }
+
+type ProductVariant struct {
+	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
+	ProductID uuid.UUID `gorm:"type:char(36);index"`
+	Size      int
+	Color     string
+	Stock     int
+	Product   Product `gorm:"foreignKey:ProductID"`
+}
+
+type ProductFavorite struct {
+	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
+	ProductID uuid.UUID `gorm:"type:char(36);index"`
+}
+
+func GetProduct() []any {
+	return []any{
+		&Product{},
+		&ProductVariant{},
+	}
+}

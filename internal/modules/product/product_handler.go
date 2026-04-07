@@ -80,5 +80,16 @@ func (s *ProductController) UpdateSepatu(ginc *gin.Context) {
 	}
 
 	ginc.JSON(http.StatusOK, gin.H{"message": "Data has been successfully updated", "data": input})
+}
 
+func (s *ProductController) LikeProduct(ginc *gin.Context) {
+	var req LikeProductRequest
+
+	if err := ginc.ShouldBindJSON(&req); err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	if errLike := s.SepatuService.repo.LikeProduct(ginc, &req); errLike != nil {
+		ginc.JSON(http.StatusInternalServerError, gin.H{"error": errLike.Error()})
+	}
 }
