@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"learnapirest/helpers"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWTAuth(secret []byte) gin.HandlerFunc {
@@ -15,36 +15,15 @@ func JWTAuth(secret []byte) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
 			return
 		}
-
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
 
-			return secret, nil
-		})
+		userID, err := helpers.VerifyJWT(tokenStr, secret)
 
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
-			return
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Claims"})
-			return
-		}
-
-		user_id, ok := claims["user_id"].(string)
-
-		if !ok || user_id == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Subject"})
-			return
-		}
-
-		c.Set("userId", user_id)
+		c.Set("userId", userID)
 		c.Next()
 	}
 }

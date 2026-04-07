@@ -12,6 +12,7 @@ import (
 type IAccountRepository interface {
 	CreateAccount(ctx context.Context, account *User) error
 	GetUserByUserName(ctx context.Context, username string, password string) (*User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error)
 }
 
 type AccountRepository struct {
@@ -29,7 +30,19 @@ func (a *AccountRepository) GetUserByUserName(ctx context.Context, username stri
 
 	if err := a.db.WithContext(ctx).Where("user_name = ?", username).First(user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("Username Doesnt Exist!") // Pesan disamarkan demi keamanan
+			return nil, errors.New("Username Does not exist!") // Pesan disamarkan demi keamanan
+		}
+	}
+
+	return &user, nil
+}
+
+func (a *AccountRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error) {
+	var user User
+
+	if err := a.db.WithContext(ctx).Where("id", userID).First(user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("User Does not exist!")
 		}
 	}
 
