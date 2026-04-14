@@ -13,6 +13,7 @@ type IAccountRepository interface {
 	CreateAccount(ctx context.Context, account *User) error
 	GetUserByUserName(ctx context.Context, username string, password string) (*User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error)
+	UpdateUser(ctx context.Context, userID uuid.UUID, req *UpdateProfileRequest) error
 }
 
 type AccountRepository struct {
@@ -49,6 +50,23 @@ func (a *AccountRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (
 	return &user, nil
 }
 
+func (a *AccountRepository) UpdateUser(ctx context.Context, userID uuid.UUID, req *UpdateProfileRequest) error {
+	updates := map[string]any{}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.Email != nil {
+		updates["email"] = *req.Email
+	}
+	if req.PhoneNumber != nil {
+		updates["phone_number"] = *req.PhoneNumber
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	return a.db.WithContext(ctx).Model(&User{}).Where("id = ?", userID).Updates(updates).Error
+}
+
 func (a *AccountRepository) CreateAccount(ctx context.Context, request *RegisterUserRequest) error {
 	var existing User
 
@@ -72,6 +90,7 @@ func (a *AccountRepository) CreateAccount(ctx context.Context, request *Register
 		PasswordHash:  request.Password,
 		Email:         request.Email,
 		PhoneNumber:   request.PhoneNumber,
+		Level:         "user",
 		CreatedAt:     now,
 		LastUpdatedAt: now,
 	}

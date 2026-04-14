@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# Build & Debug artifacts
+__debug_bin*
+temp_app
+*.exe
+*.test
+
+# Security
+.env
+
+# Dokumentasi (opsional dibuang untuk menghemat beberapa KB)
+readme.md

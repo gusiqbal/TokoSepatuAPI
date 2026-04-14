@@ -5,6 +5,8 @@ import (
 	"learnapirest/helpers"
 	"learnapirest/internal/config"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type IAccountService interface {
@@ -12,6 +14,8 @@ type IAccountService interface {
 	Login(ctx context.Context, username string, password string) (string, string, error)
 	Logout(ctx context.Context, refreshToken string) error
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
+	GetProfile(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, req *UpdateProfileRequest) error
 }
 
 type AccountService struct {
@@ -75,6 +79,25 @@ func (a *AccountService) Logout(ctx context.Context, refreshTokenString string) 
 	// }
 
 	return nil
+}
+
+func (a *AccountService) GetProfile(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
+	user, err := a.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &UserResponse{
+		ID:          user.ID.String(),
+		Name:        user.Name,
+		UserName:    user.UserName,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		CreatedAt:   user.CreatedAt,
+	}, nil
+}
+
+func (a *AccountService) UpdateProfile(ctx context.Context, userID uuid.UUID, req *UpdateProfileRequest) error {
+	return a.repo.UpdateUser(ctx, userID, req)
 }
 
 func (a *AccountService) RefreshToken(ctx context.Context, refresToken string) (*TokenResponse, error) {

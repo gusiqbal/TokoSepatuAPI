@@ -43,6 +43,22 @@ func (s *ProductController) GetSepatu(ginc *gin.Context) {
 	ginc.JSON(http.StatusOK, gin.H{"data": sepatus})
 }
 
+func (s *ProductController) GetSepatuByID(ginc *gin.Context) {
+	id, err := uuid.Parse(ginc.Param("id"))
+	if err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
+		return
+	}
+
+	detail, err := s.SepatuService.GetSepatuByID(ginc.Request.Context(), id)
+	if err != nil {
+		ginc.JSON(http.StatusNotFound, gin.H{"error": "product not found"})
+		return
+	}
+
+	ginc.JSON(http.StatusOK, gin.H{"data": detail})
+}
+
 func (s *ProductController) DeleteSepatu(ginc *gin.Context) {
 	input := new(string)
 	if err := ginc.ShouldBindJSON(&input); err != nil {

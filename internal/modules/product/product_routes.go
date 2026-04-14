@@ -14,9 +14,10 @@ func ProductRouter(app *gin.Engine, s *ProductService, secret []byte) {
 
 	api.POST("", sepatuCtrl.CreateSepatu)
 	api.GET("", sepatuCtrl.GetSepatu)
+	api.GET("/:id", sepatuCtrl.GetSepatuByID)
 
 	api.PUT("/:id", sepatuCtrl.UpdateSepatu)
 	api.DELETE("/:id", sepatuCtrl.DeleteSepatu)
 
-	api.POST("like", sepatuCtrl.LikeProduct)
+	api.POST("/like", sepatuCtrl.LikeProduct)
 }

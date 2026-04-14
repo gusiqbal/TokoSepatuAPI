@@ -12,7 +12,8 @@ COPY go.mod go.sum ./
 RUN go mod download
 # Copy the rest of the code
 COPY . .
-RUN go build  -o main ./cmd/api/main.go
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 FROM alpine:latest
 
