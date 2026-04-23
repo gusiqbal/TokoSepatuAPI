@@ -6,11 +6,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type CartService struct {
-	repo *CartRepository
+type ICartService interface {
+	GetCart(ctx context.Context, userID uuid.UUID) (*CartResponse, error)
+	AddItem(ctx context.Context, userID uuid.UUID, req *AddToCartRequest) error
+	UpdateItem(ctx context.Context, cartItemID uuid.UUID, req *UpdateCartItemRequest) error
+	RemoveItem(ctx context.Context, cartItemID uuid.UUID) error
+	ClearCart(ctx context.Context, userID uuid.UUID) error
 }
 
-func NewCartService(repo *CartRepository) *CartService {
+type CartService struct {
+	repo ICartRepository
+}
+
+func NewCartService(repo ICartRepository) *CartService {
 	return &CartService{repo: repo}
 }
 

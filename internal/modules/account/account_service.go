@@ -11,7 +11,7 @@ import (
 
 type IAccountService interface {
 	CreateAccount(ctx context.Context, account *RegisterUserRequest) error
-	Login(ctx context.Context, username string, password string) (string, string, error)
+	Login(ctx context.Context, username string, password string) (*TokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) error
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
 	GetProfile(ctx context.Context, userID uuid.UUID) (*UserResponse, error)
@@ -19,11 +19,11 @@ type IAccountService interface {
 }
 
 type AccountService struct {
-	repo *AccountRepository
+	repo IAccountRepository
 	conf *config.Config
 }
 
-func NewAccountService(repo *AccountRepository, config *config.Config) *AccountService {
+func NewAccountService(repo IAccountRepository, config *config.Config) *AccountService {
 	return &AccountService{
 		repo: repo,
 		conf: config,

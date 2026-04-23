@@ -8,6 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
+type IOrderRepository interface {
+	CreateOrder(ctx context.Context, params CreateOrderParams) (*Order, error)
+	GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]OrderResponse, error)
+	GetOrderByID(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) (*OrderResponse, error)
+}
+
 type OrderRepository struct {
 	db *gorm.DB
 }

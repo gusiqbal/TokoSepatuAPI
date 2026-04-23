@@ -10,10 +10,10 @@ import (
 )
 
 type AccountController struct {
-	AccountService *AccountService
+	AccountService IAccountService
 }
 
-func NewAccountController(AccountService *AccountService) *AccountController {
+func NewAccountController(AccountService IAccountService) *AccountController {
 	return &AccountController{
 		AccountService: AccountService,
 	}
@@ -67,7 +67,7 @@ func (a *AccountController) Logout(ginc *gin.Context) {
 
 	var LogoutRequest LogoutRequest
 
-	if err := ginc.ShouldBindJSON(LogoutRequest); err != nil {
+	if err := ginc.ShouldBindJSON(&LogoutRequest); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request!"})
 		return
 	}
@@ -138,7 +138,7 @@ func (a *AccountController) UpdateProfile(ginc *gin.Context) {
 func (a *AccountController) RefreshToken(ginc *gin.Context) {
 	var reqRefreshToken RefreshTokenRequest
 
-	if err := ginc.ShouldBindJSON(reqRefreshToken); err != nil {
+	if err := ginc.ShouldBindJSON(&reqRefreshToken); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid refresh token"})
 		return
 	}

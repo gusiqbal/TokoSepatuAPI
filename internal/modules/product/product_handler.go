@@ -9,10 +9,10 @@ import (
 )
 
 type ProductController struct {
-	SepatuService *ProductService
+	SepatuService IProductService
 }
 
-func NewProductController(sepatuService *ProductService) *ProductController {
+func NewProductController(sepatuService IProductService) *ProductController {
 	return &ProductController{
 		SepatuService: sepatuService,
 	}
@@ -20,7 +20,7 @@ func NewProductController(sepatuService *ProductService) *ProductController {
 
 func (s *ProductController) CreateSepatu(ginc *gin.Context) {
 	var input CreateProductRequest
-	if err := ginc.ShouldBindJSON(input); err != nil {
+	if err := ginc.ShouldBindJSON(&input); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -103,9 +103,13 @@ func (s *ProductController) LikeProduct(ginc *gin.Context) {
 
 	if err := ginc.ShouldBindJSON(&req); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	if errLike := s.SepatuService.repo.LikeProduct(ginc, &req); errLike != nil {
+	if errLike := s.SepatuService.LikeProduct(ginc.Request.Context(), &req); errLike != nil {
 		ginc.JSON(http.StatusInternalServerError, gin.H{"error": errLike.Error()})
+		return
 	}
+
+	ginc.JSON(http.StatusOK, gin.H{"message": "product liked"})
 }

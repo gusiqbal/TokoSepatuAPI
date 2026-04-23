@@ -8,12 +8,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type OrderService struct {
-	repo     *OrderRepository
-	cartRepo *cart.CartRepository
+type IOrderService interface {
+	CreateOrderFromCart(ctx context.Context, userID uuid.UUID, req *CreateOrderRequest) (*OrderResponse, error)
+	GetOrderHistory(ctx context.Context, userID uuid.UUID) ([]OrderResponse, error)
+	GetOrderDetail(ctx context.Context, userID uuid.UUID, orderID uuid.UUID) (*OrderResponse, error)
 }
 
-func NewOrderService(repo *OrderRepository, cartRepo *cart.CartRepository) *OrderService {
+type OrderService struct {
+	repo     IOrderRepository
+	cartRepo cart.ICartRepository
+}
+
+func NewOrderService(repo IOrderRepository, cartRepo cart.ICartRepository) *OrderService {
 	return &OrderService{repo: repo, cartRepo: cartRepo}
 }
 

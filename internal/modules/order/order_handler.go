@@ -8,10 +8,10 @@ import (
 )
 
 type OrderController struct {
-	service *OrderService
+	service IOrderService
 }
 
-func NewOrderController(service *OrderService) *OrderController {
+func NewOrderController(service IOrderService) *OrderController {
 	return &OrderController{service: service}
 }
 

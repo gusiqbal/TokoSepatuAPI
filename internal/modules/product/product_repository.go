@@ -14,6 +14,7 @@ type IProductRepository interface {
 	GetProductByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error)
 	DeleteProduct(ctx context.Context, id *string) error
 	UpdateProduct(ctx context.Context, sepatuUpdate *UpdateProductRequest, id uuid.UUID) error
+	LikeProduct(ctx context.Context, req *LikeProductRequest) error
 }
 
 type ProductRepoSitory struct {

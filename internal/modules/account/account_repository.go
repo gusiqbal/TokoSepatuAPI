@@ -10,7 +10,7 @@ import (
 )
 
 type IAccountRepository interface {
-	CreateAccount(ctx context.Context, account *User) error
+	CreateAccount(ctx context.Context, request *RegisterUserRequest) error
 	GetUserByUserName(ctx context.Context, username string, password string) (*User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error)
 	UpdateUser(ctx context.Context, userID uuid.UUID, req *UpdateProfileRequest) error
@@ -29,7 +29,7 @@ func NewAccountRepository(db *gorm.DB) *AccountRepository {
 func (a *AccountRepository) GetUserByUserName(ctx context.Context, username string, password string) (*User, error) {
 	var user User
 
-	if err := a.db.WithContext(ctx).Where("user_name = ?", username).First(user).Error; err != nil {
+	if err := a.db.WithContext(ctx).Where("user_name = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("Username Does not exist!") // Pesan disamarkan demi keamanan
 		}
@@ -41,7 +41,7 @@ func (a *AccountRepository) GetUserByUserName(ctx context.Context, username stri
 func (a *AccountRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*User, error) {
 	var user User
 
-	if err := a.db.WithContext(ctx).Where("id", userID).First(user).Error; err != nil {
+	if err := a.db.WithContext(ctx).Where("id = ?", userID).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("User Does not exist!")
 		}
@@ -95,5 +95,5 @@ func (a *AccountRepository) CreateAccount(ctx context.Context, request *Register
 		LastUpdatedAt: now,
 	}
 
-	return a.db.WithContext(ctx).Create(newUser).Error
+	return a.db.WithContext(ctx).Create(&newUser).Error
 }

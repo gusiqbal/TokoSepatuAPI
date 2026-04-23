@@ -8,10 +8,10 @@ import (
 )
 
 type CartController struct {
-	service *CartService
+	service ICartService
 }
 
-func NewCartController(service *CartService) *CartController {
+func NewCartController(service ICartService) *CartController {
 	return &CartController{service: service}
 }
 

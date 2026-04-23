@@ -16,6 +16,7 @@ type ICartRepository interface {
 	UpdateItem(ctx context.Context, cartItemID uuid.UUID, quantity int) error
 	RemoveItem(ctx context.Context, cartItemID uuid.UUID) error
 	ClearCart(ctx context.Context, cartID uuid.UUID) error
+	GetRawCartItems(ctx context.Context, userID uuid.UUID) (uuid.UUID, []CartItem, error)
 }
 
 type CartRepository struct {

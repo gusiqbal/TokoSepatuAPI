@@ -12,13 +12,14 @@ type IProductService interface {
 	GetSepatuByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error)
 	DeleteSepatu(ctx context.Context, id *string) error
 	UpdateSepatu(ctx context.Context, sepatu *UpdateProductRequest, id uuid.UUID) error
+	LikeProduct(ctx context.Context, req *LikeProductRequest) error
 }
 
 type ProductService struct {
-	repo *ProductRepoSitory
+	repo IProductRepository
 }
 
-func NewProductService(repo *ProductRepoSitory) *ProductService {
+func NewProductService(repo IProductRepository) *ProductService {
 	return &ProductService{
 		repo: repo,
 	}
