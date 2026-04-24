@@ -11,8 +11,10 @@ import (
 type IProductRepository interface {
 	CreateProduct(ctx context.Context, sepatu *CreateProductRequest) error
 	GetProduct(ctx context.Context) ([]Product, error)
+	GetProductByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error)
 	DeleteProduct(ctx context.Context, id *string) error
 	UpdateProduct(ctx context.Context, sepatuUpdate *UpdateProductRequest, id uuid.UUID) error
+	LikeProduct(ctx context.Context, req *LikeProductRequest) error
 }
 
 type ProductRepoSitory struct {
@@ -78,6 +80,37 @@ func (r *ProductRepoSitory) UpdateProduct(ctx context.Context, sepatuUpdate *Upd
 	sepatus.LastUpdatedAt = time.Now().Unix()
 
 	return r.db.Save(&sepatus).Error
+}
+
+func (r *ProductRepoSitory) GetProductByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error) {
+	var product Product
+	if err := r.db.WithContext(ctx).First(&product, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	var variants []ProductVariant
+	r.db.WithContext(ctx).Where("product_id = ?", id).Find(&variants)
+
+	variantResponses := make([]ProductVariantResponse, len(variants))
+	for i, v := range variants {
+		variantResponses[i] = ProductVariantResponse{
+			ID:    v.ID.String(),
+			Size:  v.Size,
+			Color: v.Color,
+			Stock: v.Stock,
+		}
+	}
+
+	return &ProductDetailResponse{
+		ID:        product.ID.String(),
+		Name:      product.Name,
+		Brand:     product.Brand,
+		Size:      product.Size,
+		Price:     product.Price,
+		Stock:     product.Stock,
+		CreatedAt: product.CreatedAt,
+		Variants:  variantResponses,
+	}, nil
 }
 
 func (r *ProductRepoSitory) LikeProduct(ctx context.Context, req *LikeProductRequest) error {

@@ -46,7 +46,7 @@ func GenerateRefreshToken(userID uuid.UUID, secretKey []byte) (string, error) {
 }
 
 func VerifyJWT(tokenString string, secretKey []byte) (uuid.UUID, error) {
-	token, err := jwt.ParseWithClaims(tokenString, JwtCustomClaims{}, func(t *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JwtCustomClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("Invalid signing method")
 		}

@@ -1,4 +1,5 @@
 # 1. Binaries & Executables
+/tmp/
 *.exe
 *.exe~
 *.dll

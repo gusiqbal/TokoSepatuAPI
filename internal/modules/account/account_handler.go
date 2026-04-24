@@ -6,13 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AccountController struct {
-	AccountService *AccountService
+	AccountService IAccountService
 }
 
-func NewAccountController(AccountService *AccountService) *AccountController {
+func NewAccountController(AccountService IAccountService) *AccountController {
 	return &AccountController{
 		AccountService: AccountService,
 	}
@@ -20,7 +21,7 @@ func NewAccountController(AccountService *AccountService) *AccountController {
 
 func (a *AccountController) CreateAccount(ginc *gin.Context) {
 	var input RegisterUserRequest
-	if err := ginc.ShouldBindJSON(input); err != nil {
+	if err := ginc.ShouldBindJSON(&input); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -66,7 +67,7 @@ func (a *AccountController) Logout(ginc *gin.Context) {
 
 	var LogoutRequest LogoutRequest
 
-	if err := ginc.ShouldBindJSON(LogoutRequest); err != nil {
+	if err := ginc.ShouldBindJSON(&LogoutRequest); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request!"})
 		return
 	}
@@ -87,10 +88,57 @@ func (a *AccountController) Logout(ginc *gin.Context) {
 
 }
 
+func (a *AccountController) GetProfile(ginc *gin.Context) {
+	val, exists := ginc.Get("userId")
+	if !exists {
+		ginc.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID, ok := val.(uuid.UUID)
+	if !ok {
+		ginc.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	profile, err := a.AccountService.GetProfile(ginc.Request.Context(), userID)
+	if err != nil {
+		ginc.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ginc.JSON(http.StatusOK, gin.H{"data": profile})
+}
+
+func (a *AccountController) UpdateProfile(ginc *gin.Context) {
+	val, exists := ginc.Get("userId")
+	if !exists {
+		ginc.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userID, ok := val.(uuid.UUID)
+	if !ok {
+		ginc.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var req UpdateProfileRequest
+	if err := ginc.ShouldBindJSON(&req); err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := a.AccountService.UpdateProfile(ginc.Request.Context(), userID, &req); err != nil {
+		ginc.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ginc.JSON(http.StatusOK, gin.H{"message": "profile updated"})
+}
+
 func (a *AccountController) RefreshToken(ginc *gin.Context) {
 	var reqRefreshToken RefreshTokenRequest
 
-	if err := ginc.ShouldBindJSON(reqRefreshToken); err != nil {
+	if err := ginc.ShouldBindJSON(&reqRefreshToken); err != nil {
 		ginc.JSON(http.StatusBadRequest, gin.H{"error": "Invalid refresh token"})
 		return
 	}

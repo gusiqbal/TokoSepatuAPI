@@ -26,6 +26,24 @@ type ProductResponse struct {
 	Price float64 `json:"price"`
 }
 
+type ProductVariantResponse struct {
+	ID    string `json:"id"`
+	Size  int    `json:"size"`
+	Color string `json:"color"`
+	Stock int    `json:"stock"`
+}
+
+type ProductDetailResponse struct {
+	ID        string                   `json:"id"`
+	Name      string                   `json:"name"`
+	Brand     string                   `json:"brand"`
+	Size      int                      `json:"size"`
+	Price     float64                  `json:"price"`
+	Stock     int                      `json:"stock"`
+	CreatedAt int64                    `json:"createdAt"`
+	Variants  []ProductVariantResponse `json:"variants"`
+}
+
 type LikeProductRequest struct {
 	ID uuid.UUID `json:"productId"`
 }

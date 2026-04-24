@@ -9,15 +9,17 @@ import (
 type IProductService interface {
 	CreateSepatu(ctx context.Context, sepatus *CreateProductRequest) error
 	GetSepatu(ctx context.Context) ([]Product, error)
+	GetSepatuByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error)
 	DeleteSepatu(ctx context.Context, id *string) error
 	UpdateSepatu(ctx context.Context, sepatu *UpdateProductRequest, id uuid.UUID) error
+	LikeProduct(ctx context.Context, req *LikeProductRequest) error
 }
 
 type ProductService struct {
-	repo *ProductRepoSitory
+	repo IProductRepository
 }
 
-func NewProductService(repo *ProductRepoSitory) *ProductService {
+func NewProductService(repo IProductRepository) *ProductService {
 	return &ProductService{
 		repo: repo,
 	}
@@ -29,6 +31,10 @@ func (s *ProductService) CreateSepatu(ctx context.Context, sepatus *CreateProduc
 
 func (s *ProductService) GetSepatu(ctx context.Context) ([]Product, error) {
 	return s.repo.GetProduct(ctx)
+}
+
+func (s *ProductService) GetSepatuByID(ctx context.Context, id uuid.UUID) (*ProductDetailResponse, error) {
+	return s.repo.GetProductByID(ctx, id)
 }
 
 func (s *ProductService) DeleteSepatu(ctx context.Context, id *string) error {

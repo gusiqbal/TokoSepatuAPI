@@ -8,13 +8,15 @@ import (
 )
 
 type Order struct {
-	ID            uuid.UUID `gorm:"type:char(36);primary_key"`
-	UserID        uuid.UUID `gorm:"type:char(36); index"`
-	Status        string
-	TotalPrice    float64
-	User          account.User `gorm:"foreignKey:UserID"`
-	LastUpdatedAt int64        `gorm:"autoUpdateTime:milli"`
-	CreatedAt     int64        `gorm:"autoCreateTime:milli"`
+	ID              uuid.UUID    `gorm:"type:char(36);primary_key"`
+	UserID          uuid.UUID    `gorm:"type:char(36); index"`
+	Status          string       `gorm:"type:varchar(50);default:'pending'"`
+	TotalPrice      float64
+	PaymentMethod   string       `gorm:"type:varchar(100)"`
+	ShippingAddress string       `gorm:"type:varchar(500)"`
+	User            account.User `gorm:"foreignKey:UserID"`
+	LastUpdatedAt   int64        `gorm:"autoUpdateTime:milli"`
+	CreatedAt       int64        `gorm:"autoCreateTime:milli"`
 }
 
 type OrderItem struct {

@@ -7,18 +7,26 @@ import (
 	"learnapirest/internal/modules/order"
 	"learnapirest/internal/modules/product"
 	"log"
+
+	"github.com/joho/godotenv"
 	// import module lain yang punya tabel
 )
 
 func main() {
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: Could not load .env file:", err)
+	}
+
 	db := config.InitDB()
 	var getAllModels []any
 
-	getAllModels = append(getAllModels, product.GetProduct())
-	getAllModels = append(getAllModels, order.GetOrder())
-	getAllModels = append(getAllModels, cart.GetCart())
-	getAllModels = append(getAllModels, account.GetUser())
-	err := db.AutoMigrate(getAllModels...)
+	getAllModels = append(getAllModels, product.GetProduct()...)
+	getAllModels = append(getAllModels, order.GetOrder()...)
+	getAllModels = append(getAllModels, cart.GetCart()...)
+	getAllModels = append(getAllModels, account.GetUser()...)
+	err = db.AutoMigrate(getAllModels...)
 
 	if err != nil {
 		log.Fatal("Migration failed: ", err)
