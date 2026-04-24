@@ -28,6 +28,7 @@ func SetupRouter(
 		middleware.Recovery(),
 		limiter.Middleware(),
 		middleware.Logger(),
+		middleware.CorsSetup(),
 	)
 
 	product.ProductRouter(app, s, secret)

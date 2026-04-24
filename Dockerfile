@@ -13,14 +13,17 @@ RUN go mod download
 # Copy the rest of the code
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api && \
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o migrate ./cmd/migration
 
 FROM alpine:latest
 
 RUN apk add --no-cache curl
 
 WORKDIR /root
+
 COPY --from=builder /app/main .
+COPY --from=builder /app/migrate .
 # COPY .env .env bahaya env bisa bocor ke public lewat image
 
 EXPOSE 8080
