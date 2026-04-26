@@ -12,6 +12,7 @@ type IOrderRepository interface {
 	CreateOrder(ctx context.Context, params CreateOrderParams) (*Order, error)
 	GetOrdersByUserID(ctx context.Context, userID uuid.UUID) ([]OrderResponse, error)
 	GetOrderByID(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) (*OrderResponse, error)
+	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 }
 
 type OrderRepository struct {
@@ -131,6 +132,13 @@ func (r *OrderRepository) GetOrderByID(ctx context.Context, orderID uuid.UUID, u
 
 	res := buildOrderResponse(order, items)
 	return &res, nil
+}
+
+func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error {
+	return r.db.WithContext(ctx).
+		Model(&Order{}).
+		Where("id = ?", orderID).
+		Update("status", status).Error
 }
 
 func buildOrderResponse(o Order, items []OrderItem) OrderResponse {

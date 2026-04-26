@@ -6,6 +6,7 @@ import (
 	"learnapirest/internal/modules/cart"
 	"learnapirest/internal/modules/order"
 	"learnapirest/internal/modules/product"
+	"learnapirest/internal/modules/transaction"
 
 	"learnapirest/internal/middleware"
 	"time"
@@ -18,6 +19,7 @@ func SetupRouter(
 	a *account.AccountService,
 	c *cart.CartService,
 	o *order.OrderService,
+	p *transaction.PaymentService,
 	config *config.Config,
 ) *gin.Engine {
 	limiter := middleware.NewRateLimiter(100, time.Minute)
@@ -35,6 +37,7 @@ func SetupRouter(
 	account.AccountRouter(app, a, secret)
 	cart.CartRouter(app, c, secret)
 	order.OrderRouter(app, o, secret)
+	transaction.PaymentRouter(app, p, secret)
 
 	return app
 }
