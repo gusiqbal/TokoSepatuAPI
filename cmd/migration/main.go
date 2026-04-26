@@ -6,10 +6,10 @@ import (
 	"learnapirest/internal/modules/cart"
 	"learnapirest/internal/modules/order"
 	"learnapirest/internal/modules/product"
+	"learnapirest/internal/modules/transaction"
 	"log"
 
 	"github.com/joho/godotenv"
-	// import module lain yang punya tabel
 )
 
 func main() {
@@ -26,6 +26,7 @@ func main() {
 	getAllModels = append(getAllModels, order.GetOrder()...)
 	getAllModels = append(getAllModels, cart.GetCart()...)
 	getAllModels = append(getAllModels, account.GetUser()...)
+	getAllModels = append(getAllModels, transaction.GetPayment()...)
 	err = db.AutoMigrate(getAllModels...)
 
 	if err != nil {

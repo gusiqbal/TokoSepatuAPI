@@ -1,0 +1,1252 @@
+openapi: 3.0.3
+info:
+  title: GoLearnTokoSepatu API
+  description: |
+    REST API for a shoe store (toko sepatu) e-commerce application.
+
+    ## Authentication
+    Most endpoints require a JWT Bearer token obtained from `POST /sessions`.
+    Include it in the `Authorization` header: `Authorization: Bearer <token>`
+
+    ## Payment Flow (Stripe)
+    1. Add items to cart via `POST /cart/items`
+    2. Create an order via `POST /orders` — returns an `orderId`
+    3. Initiate payment via `POST /payments/checkout` — returns a Stripe `clientSecret`
+    4. Use the `clientSecret` with [Stripe.js](https://stripe.com/docs/js) on the frontend to confirm payment
+    5. Stripe sends a webhook event to `POST /payments/webhook`
+    6. Poll `GET /payments/status/{orderId}` to check payment status
+
+    ## Rate Limiting
+    100 requests per minute per IP address.
+  version: 1.0.0
+  contact:
+    name: bagusiqbal_
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Accounts
+    description: User registration and profile management
+  - name: Sessions
+    description: Authentication — login, logout, token refresh
+  - name: Products
+    description: Shoe catalog management
+  - name: Cart
+    description: Shopping cart operations
+  - name: Orders
+    description: Order placement and history
+  - name: Payments
+    description: Stripe payment processing
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from `POST /sessions`
+
+  schemas:
+    # ─── Account ─────────────────────────────────────────────────────────────
+    RegisterUserRequest:
+      type: object
+      required: [name, userName, email, password]
+      properties:
+        name:
+          type: string
+          example: Bagus Iqbal
+        userName:
+          type: string
+          example: bagusiqbal_
+        email:
+          type: string
+          format: email
+          example: bagus@example.com
+        password:
+          type: string
+          minLength: 6
+          example: secret123
+        phoneNumber:
+          type: string
+          example: "+6281234567890"
+        level:
+          type: string
+          example: user
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: bagusiqbal_
+        password:
+          type: string
+          example: secret123
+
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Bagus Iqbal Updated
+        email:
+          type: string
+          format: email
+          example: new@example.com
+        phoneNumber:
+          type: string
+          example: "+6289876543210"
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          example: Bagus Iqbal
+        userName:
+          type: string
+          example: bagusiqbal_
+        email:
+          type: string
+          example: bagus@example.com
+        phoneNumber:
+          type: string
+          example: "+6281234567890"
+        createdAt:
+          type: integer
+          format: int64
+          description: Unix timestamp in milliseconds
+          example: 1700000000000
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT valid for 15 minutes
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: JWT valid for 7 days
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    # ─── Product ─────────────────────────────────────────────────────────────
+    CreateProductRequest:
+      type: object
+      required: [name, brand, size, price, stock]
+      properties:
+        name:
+          type: string
+          example: Air Max 90
+        brand:
+          type: string
+          example: Nike
+        size:
+          type: integer
+          minimum: 1
+          example: 42
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 1500000
+        stock:
+          type: integer
+          minimum: 0
+          example: 50
+
+    UpdateProductRequest:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: Air Max 90 Updated
+        brand:
+          type: string
+          example: Nike
+        size:
+          type: integer
+          minimum: 1
+          example: 43
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 1600000
+        stock:
+          type: integer
+          minimum: 0
+          example: 30
+
+    LikeProductRequest:
+      type: object
+      required: [productId]
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: Air Max 90
+        brand:
+          type: string
+          example: Nike
+        price:
+          type: number
+          format: double
+          example: 1500000
+
+    ProductVariantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440002
+        size:
+          type: integer
+          example: 42
+        color:
+          type: string
+          example: White/Black
+        stock:
+          type: integer
+          example: 10
+
+    ProductDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          example: Air Max 90
+        brand:
+          type: string
+          example: Nike
+        size:
+          type: integer
+          example: 42
+        price:
+          type: number
+          format: double
+          example: 1500000
+        stock:
+          type: integer
+          example: 50
+        createdAt:
+          type: integer
+          format: int64
+          example: 1700000000000
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariantResponse'
+
+    # ─── Cart ─────────────────────────────────────────────────────────────────
+    AddToCartRequest:
+      type: object
+      required: [productVariantId, quantity]
+      properties:
+        productVariantId:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440002
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    UpdateCartItemRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 3
+
+    CartItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 770e8400-e29b-41d4-a716-446655440003
+        productVariantId:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440002
+        productName:
+          type: string
+          example: Air Max 90
+        brand:
+          type: string
+          example: Nike
+        color:
+          type: string
+          example: White/Black
+        size:
+          type: integer
+          example: 42
+        price:
+          type: number
+          format: double
+          example: 1500000
+        quantity:
+          type: integer
+          example: 2
+        subtotal:
+          type: number
+          format: double
+          example: 3000000
+
+    CartResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 880e8400-e29b-41d4-a716-446655440004
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        totalPrice:
+          type: number
+          format: double
+          example: 3000000
+
+    # ─── Order ────────────────────────────────────────────────────────────────
+    CreateOrderRequest:
+      type: object
+      required: [paymentMethod, shippingAddress]
+      properties:
+        paymentMethod:
+          type: string
+          description: Payment method label (use "stripe" to pay with Stripe)
+          example: stripe
+          enum: [stripe, transfer, cash]
+        shippingAddress:
+          type: string
+          example: Jl. Sudirman No. 1, Jakarta Pusat
+
+    OrderItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 990e8400-e29b-41d4-a716-446655440005
+        productVariantId:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440002
+        productName:
+          type: string
+          example: Air Max 90
+        brand:
+          type: string
+          example: Nike
+        color:
+          type: string
+          example: White/Black
+        size:
+          type: integer
+          example: 42
+        quantity:
+          type: integer
+          example: 2
+        priceAtPurchase:
+          type: number
+          format: double
+          example: 1500000
+        subtotal:
+          type: number
+          format: double
+          example: 3000000
+
+    OrderResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: aa0e8400-e29b-41d4-a716-446655440006
+        status:
+          type: string
+          example: pending
+          enum: [pending, paid, payment_failed, shipped, delivered, cancelled]
+        totalPrice:
+          type: number
+          format: double
+          example: 3000000
+        paymentMethod:
+          type: string
+          example: stripe
+        shippingAddress:
+          type: string
+          example: Jl. Sudirman No. 1, Jakarta Pusat
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        createdAt:
+          type: integer
+          format: int64
+          example: 1700000000000
+
+    # ─── Payment / Stripe ─────────────────────────────────────────────────────
+    CreateCheckoutRequest:
+      type: object
+      required: [orderId]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: ID of the order to pay for
+          example: aa0e8400-e29b-41d4-a716-446655440006
+
+    CheckoutResponse:
+      type: object
+      properties:
+        clientSecret:
+          type: string
+          description: |
+            Stripe PaymentIntent client secret.
+            Pass this to `stripe.confirmCardPayment()` or `stripe.confirmPayment()`
+            on the frontend to complete the payment.
+          example: pi_3OxyzABC123_secret_abc123xyz
+        paymentIntentId:
+          type: string
+          description: Stripe PaymentIntent ID (pi_...)
+          example: pi_3OxyzABC123
+        amount:
+          type: integer
+          format: int64
+          description: Amount in the smallest currency unit (cents for USD)
+          example: 300000000
+        currency:
+          type: string
+          example: usd
+
+    PaymentStatusResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          example: aa0e8400-e29b-41d4-a716-446655440006
+        stripePaymentIntentId:
+          type: string
+          example: pi_3OxyzABC123
+        amount:
+          type: integer
+          format: int64
+          description: Amount in cents
+          example: 300000000
+        currency:
+          type: string
+          example: usd
+        status:
+          type: string
+          enum: [pending, succeeded, failed, cancelled]
+          example: succeeded
+
+    # ─── Errors ───────────────────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: unauthorized
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: unauthorized
+    BadRequest:
+      description: Invalid request body or parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+# ─── Paths ────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Accounts ────────────────────────────────────────────────────────────────
+  /accounts:
+    post:
+      tags: [Accounts]
+      summary: Register a new user account
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Account has been created
+                  username:
+                    type: string
+                    example: bagusiqbal_
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /profile:
+    get:
+      tags: [Accounts]
+      summary: Get current user profile
+      operationId: getProfile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Accounts]
+      summary: Update current user profile
+      operationId: updateProfile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: profile updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── Sessions ────────────────────────────────────────────────────────────────
+  /sessions:
+    post:
+      tags: [Sessions]
+      summary: Login and obtain JWT tokens
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login success
+                  token:
+                    type: string
+                    description: JWT access token (15 min expiry)
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Sessions]
+      summary: Logout (invalidate refresh token)
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Logout Success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /sessions/refresh:
+    post:
+      tags: [Sessions]
+      summary: Refresh access token using a refresh token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New token pair issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Products ────────────────────────────────────────────────────────────────
+  /sepatu:
+    get:
+      tags: [Products]
+      summary: List all products
+      operationId: listProducts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Products]
+      summary: Create a new product
+      operationId: createProduct
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '200':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreateProductRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sepatu/{id}:
+    get:
+      tags: [Products]
+      summary: Get product details by ID
+      operationId: getProductById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+      responses:
+        '200':
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ProductDetailResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Products]
+      summary: Update a product
+      operationId: updateProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Data has been successfully updated
+                  data:
+                    $ref: '#/components/schemas/UpdateProductRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [Products]
+      summary: Delete a product
+      operationId: deleteProduct
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Data has been successfully deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sepatu/like:
+    post:
+      tags: [Products]
+      summary: Mark a product as favourite
+      operationId: likeProduct
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LikeProductRequest'
+      responses:
+        '200':
+          description: Product liked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: product liked
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Cart ─────────────────────────────────────────────────────────────────────
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get current user's cart
+      operationId: getCart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart contents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [Cart]
+      summary: Clear all items from cart
+      operationId: clearCart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: cart cleared
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /cart/items:
+    post:
+      tags: [Cart]
+      summary: Add an item to cart
+      operationId: addCartItem
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: item added to cart
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /cart/items/{id}:
+    put:
+      tags: [Cart]
+      summary: Update cart item quantity
+      operationId: updateCartItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Cart item ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: cart item updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags: [Cart]
+      summary: Remove an item from cart
+      operationId: removeCartItem
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Cart item ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: item removed from cart
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Orders ───────────────────────────────────────────────────────────────────
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create an order from the current cart
+      description: |
+        Creates an order from all items currently in the user's cart and clears
+        the cart. Use `paymentMethod: "stripe"` then call `POST /payments/checkout`
+        to initiate the Stripe payment flow.
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: order created
+                  data:
+                    $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      tags: [Orders]
+      summary: Get current user's order history
+      operationId: getOrderHistory
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order details by ID
+      operationId: getOrderById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Order ID
+          schema:
+            type: string
+            format: uuid
+          example: aa0e8400-e29b-41d4-a716-446655440006
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Payments (Stripe) ────────────────────────────────────────────────────────
+  /payments/checkout:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe PaymentIntent for an order
+      description: |
+        Creates a Stripe PaymentIntent and returns the `clientSecret` needed by
+        the frontend to confirm the payment using Stripe.js or the Stripe mobile SDK.
+
+        **Frontend integration example:**
+        ```js
+        const { error } = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: { card: cardElement }
+        });
+        ```
+
+        After Stripe processes the payment, it sends a webhook event to
+        `POST /payments/webhook` which automatically updates the order status.
+      operationId: createCheckout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckoutRequest'
+            example:
+              orderId: aa0e8400-e29b-41d4-a716-446655440006
+      responses:
+        '200':
+          description: PaymentIntent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CheckoutResponse'
+              example:
+                data:
+                  clientSecret: pi_3OxyzABC123_secret_abc123xyz
+                  paymentIntentId: pi_3OxyzABC123
+                  amount: 300000000
+                  currency: usd
+        '400':
+          description: Invalid order ID, order not found, or order already paid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                notFound:
+                  value:
+                    error: order not found
+                alreadyPaid:
+                  value:
+                    error: order already paid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /payments/webhook:
+    post:
+      tags: [Payments]
+      summary: Stripe webhook receiver
+      description: |
+        **This endpoint is called by Stripe servers — do not call it from your application.**
+
+        Verifies the `Stripe-Signature` header and processes the following events:
+
+        | Event | Effect |
+        |---|---|
+        | `payment_intent.succeeded` | Sets payment → `succeeded`, order → `paid` |
+        | `payment_intent.payment_failed` | Sets payment → `failed`, order → `payment_failed` |
+
+        Configure this URL in the [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks).
+        The endpoint secret (`STRIPE_WEBHOOK_SECRET`) must match the one in your `.env`.
+      operationId: stripeWebhook
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          description: Stripe webhook signature for payload verification
+          schema:
+            type: string
+          example: t=1700000000,v1=abc123...
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw Stripe event payload
+      responses:
+        '200':
+          description: Webhook received and processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid signature or malformed payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payments/status/{orderId}:
+    get:
+      tags: [Payments]
+      summary: Get payment status for an order
+      description: |
+        Poll this endpoint after initiating a Stripe payment to check the
+        current status. Alternatively, listen for order status changes via
+        your own notification system after the webhook fires.
+      operationId: getPaymentStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: Order ID to check payment status for
+          schema:
+            type: string
+            format: uuid
+          example: aa0e8400-e29b-41d4-a716-446655440006
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PaymentStatusResponse'
+              example:
+                data:
+                  orderId: aa0e8400-e29b-41d4-a716-446655440006
+                  stripePaymentIntentId: pi_3OxyzABC123
+                  amount: 300000000
+                  currency: usd
+                  status: succeeded
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No payment record found for this order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
